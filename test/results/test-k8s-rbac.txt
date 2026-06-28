@@ -1,0 +1,20 @@
+Cluster: atlantis-eks   Region: eu-north-1   Account: 383237353974
+
+== Access entries / policies (AWS side) ==
+  (AWS CLI too old for access-entry APIs; relying on the kubectl checks below)
+
+== eks-admin: expect full access ==
+  PASS: admin: can do everything (* *) (got 'yes')
+  PASS: admin: can create deployments (got 'yes')
+  PASS: admin: can delete nodes (got 'yes')
+  PASS: admin: can create namespaces (got 'yes')
+
+== eks-read-only: expect reads only ==
+  PASS: read-only: can get pods (got 'yes')
+  PASS: read-only: can list services (got 'yes')
+  PASS: read-only: CANNOT list nodes (view excludes nodes) (got 'no')
+  PASS: read-only: CANNOT create deployments (got 'no')
+  PASS: read-only: CANNOT delete pods (got 'no')
+  PASS: read-only: CANNOT create namespaces (got 'no')
+
+Results: 10 passed, 0 failed

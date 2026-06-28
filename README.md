@@ -6,22 +6,29 @@ Deploys an EKS cluster and Atlantis on AWS using Terraform and Helm.
 - 1 VPC, 2 subnets
 - 1 EKS cluster with autoscaling workers (min 1, max 2)
 - IAM roles: `eks-admin` (admin), `eks-read-only` (read-only)
-- Atlantis deployed via Helm, connected to this GitHub repo
+- EBS CSI driver + default `gp3` StorageClass for Atlantis's persistent volume
+- Atlantis deployed via Helm, connected to this GitHub repo (plan-only, IRSA role)
 
 ## How it works
 
 Everything runs in **GitHub Actions** — there is nothing to install locally.
 
-- **`terraform.yml`** — on a pull request it runs `terraform plan`; on merge to
-  `main` it runs `terraform apply`. Modules run in order: `vpc` → `eks` →
-  `atlantis`.
-- **`terraform-module.yml`** — reusable workflow that does init/plan/apply for a
-  single module.
+- **`terraform.yml`** — on a pull request it runs `terraform fmt`/`validate`
+  checks; on merge to `main` it runs `terraform apply`. Modules run in order:
+  `vpc` → `eks` → `atlantis`.
+- **`terraform-module.yml`** — reusable workflow that does init/validate/apply
+  for a single module.
 - **`bootstrap-backend.yml`** — one-time, manually-triggered workflow that
   creates the S3 bucket + DynamoDB table used for remote Terraform state and
   locking.
 
 State lives in S3 (not on a laptop), so the pipeline is fully stateless.
+
+**Plan vs apply split.** Atlantis runs `terraform plan` on pull requests (driven
+by `atlantis.yaml`) and uses a read-only AWS role, so it never mutates infra.
+GitHub Actions performs the `apply` on merge to `main`. This keeps two appliers
+from racing on the same state, and stops Atlantis from modifying the very
+cluster it runs on.
 
 ## Prerequisites
 - An AWS account
@@ -89,18 +96,14 @@ It is idempotent — safe to re-run.
 
 Deployment is driven entirely by the `terraform` workflow:
 
-- **Open a pull request** that touches `terraform/**` → the pipeline runs
-  `terraform plan` for each module and reports the result on the PR.
-- **Merge to `main`** → the pipeline runs `terraform apply` in order
+- **Open a pull request** that touches `terraform/**` → Actions runs
+  `fmt`/`validate`, and **Atlantis comments a `terraform plan`** on the PR.
+- **Merge to `main`** → Actions runs `terraform apply` in order
   (`vpc` → `eks` → `atlantis`).
 
 For the **first ever deploy**, merge to `main` (or push the initial commit) so
 all three modules apply in sequence. The Atlantis `LoadBalancer` can take a few
 minutes to get a public hostname.
-
-> Note: on a PR opened *before* the VPC/EKS state exists, the `eks` and
-> `atlantis` plan steps will fail because their upstream remote state isn't
-> there yet. This resolves itself after the first apply to `main`.
 
 GitHub credentials for Atlantis are passed to Terraform from the Actions secrets
 above (never committed), stored in a Kubernetes Secret on the cluster.
@@ -157,18 +160,25 @@ aws eks update-kubeconfig --name atlantis-eks --region eu-north-1 \
 ## Verify Atlantis
 
 Open a pull request in this repo — Atlantis should comment with a
-`terraform plan` output automatically. Comment `atlantis apply` on the PR to
-apply, then merge.
+`terraform plan` output automatically. That plan comment is the proof Atlantis
+is working.
+
+Applies are handled by GitHub Actions on merge to `main` (Atlantis has a
+read-only role on this repo), so you don't run `atlantis apply` here — just
+merge the PR and Actions applies it.
 
 ## Structure
 ```
 .github/workflows/
-├── terraform.yml            # plan on PR, apply on merge (vpc → eks → atlantis)
-├── terraform-module.yml     # reusable per-module init/plan/apply
+├── terraform.yml            # validate on PR, apply on merge (vpc → eks → atlantis)
+├── terraform-module.yml     # reusable per-module init/validate/apply
+├── terraform-destroy.yml    # manual teardown (atlantis → eks → vpc)
 └── bootstrap-backend.yml    # one-time S3 + DynamoDB state backend setup
+
+atlantis.yaml                # Atlantis repo config: projects + plan workflow
 
 terraform/
 ├── vpc/        # VPC and subnets
-├── eks/        # EKS cluster, IAM roles, autoscaling
-└── atlantis/   # Helm release for Atlantis
+├── eks/        # EKS cluster, IAM roles, autoscaling, EBS CSI driver
+└── atlantis/   # Helm release, IRSA role, default gp3 StorageClass
 ```

@@ -1,0 +1,8 @@
+Namespace: atlantis
+
+  PASS: atlantis-0 pod is Running (got 'Running')
+  PASS: atlantis-data PVC is Bound (got 'Bound')
+  PASS: LoadBalancer has a hostname (got 'present')
+  webhook endpoint: http://a822988355ed446b99bd5746d6a687e9-1297090162.eu-north-1.elb.amazonaws.com/events
+
+Results: 3 passed, 0 failed

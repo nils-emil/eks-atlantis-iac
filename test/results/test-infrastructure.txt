@@ -1,0 +1,18 @@
+Cluster: atlantis-eks   Region: eu-north-1
+
+== VPC and subnets ==
+  PASS: exactly 1 VPC (got '1')
+  PASS: exactly 2 subnets (got '2')
+
+== EKS cluster ==
+  PASS: cluster is ACTIVE (got 'ACTIVE')
+
+== Worker node group scaling ==
+  PASS: node group minSize = 1 (got '1')
+  PASS: node group maxSize = 2 (got '2')
+
+== IAM roles ==
+  PASS: IAM role 'eks-admin' exists (got 'eks-admin')
+  PASS: IAM role 'eks-read-only' exists (got 'eks-read-only')
+
+Results: 7 passed, 0 failed
