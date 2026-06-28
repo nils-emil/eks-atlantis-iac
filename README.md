@@ -2,6 +2,37 @@
 
 Deploys an EKS cluster and Atlantis on AWS using Terraform and Helm.
 
+## Possible improvements
+
+Deliberate trade-offs for a lean setup; production hardening would add:
+
+- **GitHub OIDC for AWS auth** — replace the long-lived `AWS_ACCESS_KEY_ID` /
+  `AWS_SECRET_ACCESS_KEY` secrets with OIDC role federation, so Actions assumes
+  a role with short-lived credentials and there are no static keys to rotate.
+- **HTTPS for Atlantis** — terminate TLS at the load balancer with an ACM cert
+  and a real domain (Route 53). The webhook endpoint is plain HTTP today.
+- **Private node subnets + NAT** — run workers in private subnets and keep only
+  the load balancer public; both subnets are public today.
+- **Drop DynamoDB, use S3-native locking** (`use_lockfile`, Terraform ≥ 1.11) —
+  removes the lock table, its IAM permissions, and the deprecation warning.
+- **Least-privilege IAM** — scope the CI role to the services used (not
+  `AdministratorAccess`), and narrow the `eks-admin`/`eks-read-only` trust from
+  the whole account to specific principals.
+
+## The role of Atlantis here (and why it's plan-only)
+
+This repository bootstraps the cluster Atlantis runs on, so Atlantis shouldn't
+own applies for it: something has to apply the cluster before Atlantis even
+exists (bootstrap ordering), and letting Atlantis apply `eks` would roll the very
+nodes it runs on (self-management hazard). So by design it's plan-only with a
+read-only role: Atlantis posts `terraform plan` on PRs and GitHub Actions applies
+on merge.
+
+Where Atlantis actually earns its keep is owning the full plan→apply loop
+(`atlantis apply`, with locking and approvals) for downstream workload repos that
+run on the cluster. This bootstrap repo stays on the Actions-applies model, and
+Atlantis manages those separate repos instead.
+
 ## Architecture
 - 1 VPC, 2 subnets
 - 1 EKS cluster with autoscaling workers (min 1, max 2)
@@ -11,7 +42,7 @@ Deploys an EKS cluster and Atlantis on AWS using Terraform and Helm.
 
 ## How it works
 
-Everything runs in **GitHub Actions** — there is nothing to install locally.
+Everything runs in GitHub Actions — there is nothing to install locally.
 
 - **`terraform.yml`** — on a pull request it runs `terraform fmt`/`validate`
   checks; on merge to `main` it runs `terraform apply`. Modules run in order:
@@ -36,7 +67,7 @@ cluster it runs on.
 - A GitHub personal access token for Atlantis
 
 > For the handful of read-only checks after deploy (e.g. fetching the Atlantis
-> URL), use **AWS CloudShell** — a browser terminal with the AWS CLI and
+> URL), use AWS CloudShell — a browser terminal with the AWS CLI and
 > `kubectl` preinstalled. No local installs required.
 
 ## Setup guide
@@ -97,11 +128,11 @@ It is idempotent — safe to re-run.
 Deployment is driven entirely by the `terraform` workflow:
 
 - **Open a pull request** that touches `terraform/**` → Actions runs
-  `fmt`/`validate`, and **Atlantis comments a `terraform plan`** on the PR.
+  `fmt`/`validate`, and Atlantis comments a `terraform plan` on the PR.
 - **Merge to `main`** → Actions runs `terraform apply` in order
   (`vpc` → `eks` → `atlantis`).
 
-For the **first ever deploy**, merge to `main` (or push the initial commit) so
+For the first ever deploy, merge to `main` (or push the initial commit) so
 all three modules apply in sequence. The Atlantis `LoadBalancer` can take a few
 minutes to get a public hostname.
 
@@ -160,8 +191,7 @@ aws eks update-kubeconfig --name atlantis-eks --region eu-north-1 \
 ## Verify Atlantis
 
 Open a pull request in this repo — Atlantis should comment with a
-`terraform plan` output automatically. That plan comment is the proof Atlantis
-is working.
+`terraform plan` output automatically.
 
 Applies are handled by GitHub Actions on merge to `main` (Atlantis has a
 read-only role on this repo), so you don't run `atlantis apply` here — just

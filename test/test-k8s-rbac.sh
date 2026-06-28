@@ -40,7 +40,7 @@ use_role() {
   kubectl config use-context "$2" >/dev/null
 }
 
-echo "Cluster: $CLUSTER   Region: $REGION   Account: $ACCOUNT"
+echo "Cluster: $CLUSTER   Region: $REGION"
 echo
 
 echo "== Access entries / policies (AWS side) =="

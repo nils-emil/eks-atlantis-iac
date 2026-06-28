@@ -1,4 +1,4 @@
-Cluster: atlantis-eks   Region: eu-north-1   Account: 383237353974
+Cluster: atlantis-eks   Region: eu-north-1
 
 == Access entries / policies (AWS side) ==
   (AWS CLI too old for access-entry APIs; relying on the kubectl checks below)
