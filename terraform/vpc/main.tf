@@ -12,7 +12,8 @@ resource "aws_vpc" "this" {
   enable_dns_hostnames = true
 
   tags = {
-    Name = "${var.cluster_name}-vpc"
+    Name        = "${var.cluster_name}-vpc"
+    Environment = "demo"
   }
 }
 
