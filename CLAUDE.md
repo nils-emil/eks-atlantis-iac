@@ -19,9 +19,12 @@ Deploys an EKS cluster and Atlantis on AWS using Terraform and Helm.
 - Two IAM roles: `eks-admin`, `eks-read-only`
 - Worker ASG: min 1, max 2
 
-## Common commands
-- `terraform init && terraform apply` in each module folder
-- `helm upgrade --install atlantis ...`
+## Deployment
+- Everything runs in GitHub Actions — no local Terraform/Helm/kubectl needed
+- `terraform.yml`: plan on PR, apply on merge to `main` (`vpc` → `eks` → `atlantis`)
+- `bootstrap-backend.yml`: one-time S3 + DynamoDB remote-state setup (run manually)
+- Helm is applied by the `atlantis` Terraform module (`helm_release`), not by hand
+- Config via Actions Variables; secrets via Actions Secrets; passed to Terraform as `TF_VAR_*`
 
 ## Git rules
 - **NEVER push to git unless explicitly told to do so**
@@ -31,7 +34,7 @@ Deploys an EKS cluster and Atlantis on AWS using Terraform and Helm.
 ## Security rules
 - **NEVER commit secrets, keys, or credentials** to git
 - Do not hardcode AWS access keys, secret keys, or tokens anywhere in code
-- All secrets go in `.env` files or AWS Secrets Manager — never in `.tf` files
+- All secrets go in GitHub Actions Secrets or AWS Secrets Manager — never in `.tf`/`.tfvars` files
 - Ensure `.gitignore` includes: `.env`, `*.tfvars`, `terraform.tfstate`, `.terraform/`
 - If a secret is accidentally staged, stop and alert the user before doing anything
 - IAM roles should follow least privilege principle

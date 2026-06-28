@@ -73,7 +73,7 @@ In the repo → **Settings → Secrets and variables → Actions**.
 
 | Name | Example |
 |------|---------|
-| `AWS_REGION` | `us-east-1` |
+| `AWS_REGION` | `eu-north-1` |
 | `TF_STATE_BUCKET` | `eks-atlantis-tfstate-<your-account-id>` (must be globally unique) |
 | `TF_LOCK_TABLE` | `eks-atlantis-tf-locks` |
 | `ATLANTIS_GITHUB_USER` | your GitHub username |
@@ -111,7 +111,7 @@ Open **AWS CloudShell** from the AWS Console (no install needed) and point
 `kubectl` at the cluster:
 
 ```bash
-aws eks update-kubeconfig --name atlantis-eks --region us-east-1
+aws eks update-kubeconfig --name atlantis-eks --region eu-north-1
 kubectl get nodes
 ```
 
@@ -123,7 +123,7 @@ The project provisions two IAM roles for human access:
 Assume one of them before updating kubeconfig to use that level of access:
 
 ```bash
-aws eks update-kubeconfig --name atlantis-eks --region us-east-1 \
+aws eks update-kubeconfig --name atlantis-eks --region eu-north-1 \
   --role-arn arn:aws:iam::<account-id>:role/eks-admin
 ```
 

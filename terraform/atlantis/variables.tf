@@ -1,7 +1,7 @@
 variable "region" {
   description = "AWS region the cluster lives in"
   type        = string
-  default     = "us-east-1"
+  default     = "eu-north-1"
 }
 
 variable "state_bucket" {
