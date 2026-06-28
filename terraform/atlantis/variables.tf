@@ -15,6 +15,11 @@ variable "eks_state_key" {
   default     = "eks/terraform.tfstate"
 }
 
+variable "lock_table" {
+  description = "DynamoDB table used for Terraform state locking"
+  type        = string
+}
+
 variable "namespace" {
   description = "Kubernetes namespace to deploy Atlantis into"
   type        = string
