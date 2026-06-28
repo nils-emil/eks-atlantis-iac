@@ -7,6 +7,11 @@ on:
         description: Module directory name under terraform/ (vpc, eks, atlantis)
         required: true
         type: string
+      destroy:
+        description: Run terraform destroy instead of plan/apply
+        required: false
+        type: boolean
+        default: false
 
 permissions:
   contents: read
@@ -63,5 +68,9 @@ jobs:
         run: terraform plan -input=false -no-color
 
       - name: Terraform apply
-        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        if: ${{ !inputs.destroy && github.event_name == 'push' && github.ref == 'refs/heads/main' }}
         run: terraform apply -input=false -auto-approve
+
+      - name: Terraform destroy
+        if: ${{ inputs.destroy }}
+        run: terraform destroy -input=false -auto-approve

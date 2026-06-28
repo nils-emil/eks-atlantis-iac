@@ -1,0 +1,51 @@
+name: terraform-destroy
+
+# Tears down all infrastructure in reverse order: atlantis -> eks -> vpc.
+# Manually triggered, and gated behind typing "destroy" to confirm.
+# The S3/DynamoDB state backend is NOT destroyed.
+
+on:
+  workflow_dispatch:
+    inputs:
+      confirm:
+        description: Type "destroy" to confirm tearing everything down
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  guard:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check confirmation
+        run: |
+          if [ "${{ inputs.confirm }}" != "destroy" ]; then
+            echo "Confirmation text was not 'destroy' — aborting."
+            exit 1
+          fi
+
+  atlantis:
+    needs: guard
+    uses: ./.github/workflows/terraform-module.yml
+    with:
+      module: atlantis
+      destroy: true
+    secrets: inherit
+
+  eks:
+    needs: atlantis
+    uses: ./.github/workflows/terraform-module.yml
+    with:
+      module: eks
+      destroy: true
+    secrets: inherit
+
+  vpc:
+    needs: eks
+    uses: ./.github/workflows/terraform-module.yml
+    with:
+      module: vpc
+      destroy: true
+    secrets: inherit

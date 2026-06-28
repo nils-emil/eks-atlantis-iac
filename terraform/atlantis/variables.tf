@@ -24,13 +24,13 @@ variable "namespace" {
 variable "chart_version" {
   description = "Version of the runatlantis Helm chart"
   type        = string
-  default     = "5.10.1"
+  default     = "6.7.1"
 }
 
 variable "atlantis_image_tag" {
   description = "Atlantis container image tag"
   type        = string
-  default     = "v0.27.3"
+  default     = "v0.44.1"
 }
 
 variable "github_user" {
