@@ -13,6 +13,10 @@ Deliberate trade-offs for a lean setup; production hardening would add:
   and a real domain (Route 53). The webhook endpoint is plain HTTP today.
 - **Private node subnets + NAT** — run workers in private subnets and keep only
   the load balancer public; both subnets are public today.
+- **Cluster Autoscaler** — the node group sets the min/max bounds (1–2) but
+  nothing drives scaling, so it stays at one node. Add the Cluster Autoscaler
+  (or Karpenter) to actually scale up on unschedulable pods and back down when
+  idle.
 - **Drop DynamoDB, use S3-native locking** (`use_lockfile`, Terraform ≥ 1.11) —
   removes the lock table, its IAM permissions, and the deprecation warning.
 - **Least-privilege IAM** — scope the CI role to the services used (not
