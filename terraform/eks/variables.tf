@@ -13,7 +13,7 @@ variable "cluster_name" {
 variable "kubernetes_version" {
   description = "Kubernetes control plane version (upgrade one minor at a time)"
   type        = string
-  default     = "1.32"
+  default     = "1.33"
 }
 
 variable "node_instance_type" {
