@@ -27,6 +27,7 @@ jobs:
       TF_IN_AUTOMATION: "true"
       TF_VAR_region: ${{ vars.AWS_REGION }}
       TF_VAR_state_bucket: ${{ vars.TF_STATE_BUCKET }}
+      TF_VAR_lock_table: ${{ vars.TF_LOCK_TABLE }}
       TF_VAR_github_user: ${{ vars.ATLANTIS_GITHUB_USER }}
       TF_VAR_repo_allowlist: ${{ vars.ATLANTIS_REPO_ALLOWLIST }}
       TF_VAR_github_token: ${{ secrets.ATLANTIS_GITHUB_TOKEN }}
@@ -62,10 +63,6 @@ jobs:
 
       - name: Terraform validate
         run: terraform validate
-
-      - name: Terraform plan
-        if: github.event_name == 'pull_request'
-        run: terraform plan -input=false -no-color
 
       - name: Terraform apply
         if: ${{ !inputs.destroy && github.event_name == 'push' && github.ref == 'refs/heads/main' }}

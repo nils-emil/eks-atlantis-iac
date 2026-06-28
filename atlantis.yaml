@@ -1,0 +1,32 @@
+version: 3
+projects:
+  - name: vpc
+    dir: terraform/vpc
+    workflow: remote-backend
+    autoplan:
+      when_modified: ["*.tf"]
+  - name: eks
+    dir: terraform/eks
+    workflow: remote-backend
+    autoplan:
+      when_modified: ["*.tf"]
+  - name: atlantis
+    dir: terraform/atlantis
+    workflow: remote-backend
+    autoplan:
+      when_modified: ["*.tf"]
+
+workflows:
+  remote-backend:
+    plan:
+      steps:
+        - run: |
+            terraform init -input=false -reconfigure \
+              -backend-config="bucket=$TF_STATE_BUCKET" \
+              -backend-config="key=$PROJECT_NAME/terraform.tfstate" \
+              -backend-config="region=$AWS_REGION" \
+              -backend-config="dynamodb_table=$TF_LOCK_TABLE"
+        - plan
+    apply:
+      steps:
+        - apply
