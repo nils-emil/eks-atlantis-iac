@@ -141,10 +141,32 @@ resource "helm_release" "atlantis" {
       }
 
       environment = {
-        AWS_REGION      = var.region
-        TF_STATE_BUCKET = var.state_bucket
-        TF_LOCK_TABLE   = var.lock_table
+        AWS_REGION            = var.region
+        TF_STATE_BUCKET       = var.state_bucket
+        TF_LOCK_TABLE         = var.lock_table
+        TF_VAR_region         = var.region
+        TF_VAR_state_bucket   = var.state_bucket
+        TF_VAR_lock_table     = var.lock_table
+        TF_VAR_github_user    = var.github_user
+        TF_VAR_repo_allowlist = var.repo_allowlist
       }
+
+      environmentSecrets = [
+        {
+          name = "TF_VAR_github_token"
+          secretKeyRef = {
+            name = kubernetes_secret.github.metadata[0].name
+            key  = "github_token"
+          }
+        },
+        {
+          name = "TF_VAR_github_webhook_secret"
+          secretKeyRef = {
+            name = kubernetes_secret.github.metadata[0].name
+            key  = "github_secret"
+          }
+        },
+      ]
 
       repoConfig = yamlencode({
         repos = [
