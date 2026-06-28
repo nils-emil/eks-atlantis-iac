@@ -22,6 +22,12 @@ variable "node_instance_type" {
   default     = "t3.small"
 }
 
+variable "node_ami_type" {
+  description = "EKS-optimized AMI family for worker nodes (AL2 has no AMIs for Kubernetes 1.33+)"
+  type        = string
+  default     = "AL2023_x86_64_STANDARD"
+}
+
 variable "node_min_size" {
   description = "Minimum number of worker nodes in the ASG"
   type        = number

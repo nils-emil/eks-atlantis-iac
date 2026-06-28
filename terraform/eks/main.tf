@@ -91,6 +91,8 @@ resource "aws_eks_node_group" "this" {
   node_role_arn   = aws_iam_role.node.arn
   subnet_ids      = local.subnet_ids
   instance_types  = [var.node_instance_type]
+  version         = var.kubernetes_version
+  ami_type        = var.node_ami_type
 
   scaling_config {
     min_size     = var.node_min_size
