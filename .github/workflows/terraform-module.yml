@@ -64,10 +64,6 @@ jobs:
       - name: Terraform validate
         run: terraform validate
 
-      - name: Terraform plan
-        if: github.event_name == 'pull_request'
-        run: terraform plan -input=false -no-color
-
       - name: Terraform apply
         if: ${{ !inputs.destroy && github.event_name == 'push' && github.ref == 'refs/heads/main' }}
         run: terraform apply -input=false -auto-approve
