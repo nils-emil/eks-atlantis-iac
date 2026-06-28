@@ -14,6 +14,24 @@ locals {
   cluster_ca       = data.terraform_remote_state.eks.outputs.cluster_ca_certificate
 }
 
+resource "kubernetes_storage_class_v1" "gp3" {
+  metadata {
+    name = "gp3"
+
+    annotations = {
+      "storageclass.kubernetes.io/is-default-class" = "true"
+    }
+  }
+
+  storage_provisioner    = "ebs.csi.aws.com"
+  volume_binding_mode    = "WaitForFirstConsumer"
+  allow_volume_expansion = true
+
+  parameters = {
+    type = "gp3"
+  }
+}
+
 resource "kubernetes_namespace" "atlantis" {
   metadata {
     name = var.namespace
@@ -62,5 +80,8 @@ resource "helm_release" "atlantis" {
     })
   ]
 
-  depends_on = [kubernetes_secret.github]
+  depends_on = [
+    kubernetes_secret.github,
+    kubernetes_storage_class_v1.gp3,
+  ]
 }
